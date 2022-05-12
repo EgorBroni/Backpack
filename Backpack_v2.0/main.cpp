@@ -6,39 +6,62 @@
 //
 
 #include <iostream>
+#include <filesystem>
+#include <fstream>
 #include <vector>
 
-
 using namespace std;
+namespace fs = filesystem;
+  
+int knapSackRec(int W, vector<int> wt, vector<int> val, int i, int** dp) {
+    if (i < 0)
+        return 0;
+    if (dp[i][W] != -1)
+        return dp[i][W];
+    if (wt[i] > W) {
+        dp[i][W] = knapSackRec(W, wt, val, i - 1, dp);
+        return dp[i][W];
+    } else {
+        dp[i][W] = max(val[i] + knapSackRec(W - wt[i], wt, val, i - 1, dp),knapSackRec(W, wt, val, i - 1, dp));
+        return dp[i][W];
+    }
+}
 
+int knapSack(int W, vector<int> wt, vector<int> val, int n) {
+    int** dp;
+    dp = new int*[n];
+    for (int i = 0; i < n; i++)
+        dp[i] = new int[W + 1];
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < W + 1; j++)
+            dp[i][j] = -1;
+    return knapSackRec(W, wt, val, n - 1, dp);
+}
 
 int main() {
-    int W, n;
-    cin >> n >> W;
-    
-    int inf = 100000000;
-    
-    vector <int> w(n + 1);
-    
-    for (int i = 1; i <= n; i++){
-        cin >> w[i];
-}
-    
-    vector < vector <int> > dp(n + 1, vector <int>(W + 1, -inf));
-    dp[0][0] = 0;
-    for (int i = 1; i <= n; i++){
-        for (int j = 0; j <= W; j++){
-            if (w[i] <= j){
-                dp[i][j] = max(dp[i - 1][j], dp[i - 1][j - w[i]] + w[i]); //+ c[i]
-            } else {
-                dp[i][j] = dp[i-1][j];
-            }
+    string path = "/Users/egorbronickij/Desktop/data 2";
+          auto it = fs::directory_iterator(path);
+          vector<fs::path> array_path;
+          copy_if(fs::begin(it), fs::end(it), std::back_inserter(array_path),
+              [](const auto& entry) {
+                  return fs::is_regular_file(entry);
+          });
+    for (auto& p : array_path) {
+        ifstream fin;
+        fin.open(p.string());
+        cout << p.string() << endl;
+        int n, W;
+        fin >> n >> W;
+        vector<int> values;
+        vector<int> weights;
+        for (int i = 0; i < n; i++) {
+            int value, weight;
+            fin >> value >> weight;
+            values.push_back(value);
+            weights.push_back(weight);
         }
+        int max_value = knapSack(W, weights, values, n);
+        cout << max_value << endl;
     }
-    int ans = 0;
-    for (int w = 0; w <= W; w++){
-        ans = max(ans,dp[n][w]);
-    }
-    cout << ans << endl;
     return 0;
 }
